@@ -483,6 +483,14 @@ class EventLogResponse(BaseModel):
     extra: Annotated[str | None, Field(title="Extra")] = None
 
 
+class ExternalLogUrlResponse(BaseModel):
+    """
+    Response for the external log URL endpoint.
+    """
+
+    url: Annotated[str, Field(title="Url")]
+
+
 class ExtraLinkCollectionResponse(BaseModel):
     """
     Extra Links Response.
@@ -552,6 +560,10 @@ class JobResponse(BaseModel):
     executor_class: Annotated[str | None, Field(title="Executor Class")] = None
     hostname: Annotated[str | None, Field(title="Hostname")] = None
     unixname: Annotated[str | None, Field(title="Unixname")] = None
+
+
+class JsonValue(RootModel[Any]):
+    root: Any
 
 
 class PluginImportErrorResponse(BaseModel):
@@ -829,7 +841,7 @@ class VariableBody(BaseModel):
         extra="forbid",
     )
     key: Annotated[str, Field(max_length=250, title="Key")]
-    value: Annotated[str, Field(title="Value")]
+    value: JsonValue
     description: Annotated[str | None, Field(title="Description")] = None
 
 
@@ -989,7 +1001,7 @@ class BackfillResponse(BaseModel):
     Base serializer for Backfill.
     """
 
-    id: Annotated[int, Field(title="Id")]
+    id: Annotated[int, Field(ge=0, title="Id")]
     dag_id: Annotated[str, Field(title="Dag Id")]
     from_date: Annotated[datetime, Field(title="From Date")]
     to_date: Annotated[datetime, Field(title="To Date")]
@@ -1000,6 +1012,7 @@ class BackfillResponse(BaseModel):
     created_at: Annotated[datetime, Field(title="Created At")]
     completed_at: Annotated[datetime | None, Field(title="Completed At")] = None
     updated_at: Annotated[datetime, Field(title="Updated At")]
+    dag_display_name: Annotated[str, Field(title="Dag Display Name")]
 
 
 class BulkCreateActionConnectionBody(BaseModel):
@@ -1133,6 +1146,7 @@ class DAGDetailsResponse(BaseModel):
     template_search_path: Annotated[list[str] | None, Field(title="Template Search Path")] = None
     timezone: Annotated[str | None, Field(title="Timezone")] = None
     last_parsed: Annotated[datetime | None, Field(title="Last Parsed")] = None
+    default_args: Annotated[dict[str, Any] | None, Field(title="Default Args")] = None
     file_token: Annotated[str, Field(description="Return file token.", title="File Token")]
     concurrency: Annotated[
         int, Field(description="Return max_active_tasks as concurrency.", title="Concurrency")
@@ -1211,6 +1225,8 @@ class DAGRunResponse(BaseModel):
     conf: Annotated[dict[str, Any], Field(title="Conf")]
     note: Annotated[str | None, Field(title="Note")] = None
     dag_versions: Annotated[list[DagVersionResponse], Field(title="Dag Versions")]
+    bundle_version: Annotated[str | None, Field(title="Bundle Version")] = None
+    dag_display_name: Annotated[str, Field(title="Dag Display Name")]
 
 
 class DAGRunsBatchBody(BaseModel):
@@ -1401,6 +1417,7 @@ class TaskInstanceHistoryResponse(BaseModel):
     try_number: Annotated[int, Field(title="Try Number")]
     max_tries: Annotated[int, Field(title="Max Tries")]
     task_display_name: Annotated[str, Field(title="Task Display Name")]
+    dag_display_name: Annotated[str, Field(title="Dag Display Name")]
     hostname: Annotated[str | None, Field(title="Hostname")] = None
     unixname: Annotated[str | None, Field(title="Unixname")] = None
     pool: Annotated[str, Field(title="Pool")]
@@ -1435,6 +1452,7 @@ class TaskInstanceResponse(BaseModel):
     try_number: Annotated[int, Field(title="Try Number")]
     max_tries: Annotated[int, Field(title="Max Tries")]
     task_display_name: Annotated[str, Field(title="Task Display Name")]
+    dag_display_name: Annotated[str, Field(title="Dag Display Name")]
     hostname: Annotated[str | None, Field(title="Hostname")] = None
     unixname: Annotated[str | None, Field(title="Unixname")] = None
     pool: Annotated[str, Field(title="Pool")]

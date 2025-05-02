@@ -22,6 +22,7 @@ import json
 import uuid
 from contextlib import redirect_stdout
 from io import StringIO
+from typing import TYPE_CHECKING
 
 import httpx
 import pytest
@@ -73,6 +74,9 @@ from airflowctl.api.datamodels.generated import (
     VariableResponse,
     VersionInfo,
 )
+
+if TYPE_CHECKING:
+    from pydantic import NonNegativeInt
 
 
 def make_api_client(
@@ -165,7 +169,7 @@ class TestAssetsOperations:
 
 
 class TestBackfillOperations:
-    backfill_id: int = 1
+    backfill_id: NonNegativeInt = 1
 
     def test_create(self):
         backfill_body = BackfillPostBody(
@@ -189,6 +193,7 @@ class TestBackfillOperations:
             created_at=datetime.datetime(2024, 12, 31, 23, 59, 59),
             completed_at=datetime.datetime(2025, 1, 1, 0, 0, 0),
             updated_at=datetime.datetime(2025, 1, 1, 0, 0, 0),
+            dag_display_name="TEST_DAG_1",
         )
 
         def handle_request(request: httpx.Request) -> httpx.Response:
@@ -440,6 +445,7 @@ class TestDagRunOperations:
     dag_id = "dag_id"
     dag_run_id = "dag_run_id"
     dag_run_response = DAGRunResponse(
+        dag_display_name=dag_run_id,
         dag_run_id=dag_run_id,
         dag_id=dag_id,
         logical_date=datetime.datetime(2025, 1, 1, 0, 0, 0),
@@ -657,10 +663,12 @@ class TestVariablesOperations:
     key = "key"
     value = "val"
     description = "description"
-    variable = VariableBody(
-        key=key,
-        value=value,
-        description=description,
+    variable = VariableBody.model_validate(
+        {
+            "key": key,
+            "value": value,
+            "description": description,
+        }
     )
     variable_response = VariableResponse(
         key=key,
