@@ -29,7 +29,7 @@ import functools
 import inspect
 import warnings
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, ParamSpec, TypeVar, overload
 
 import attr
 
@@ -40,11 +40,9 @@ from airflow.sdk.definitions._internal.expandinput import (
     MappedArgument,
 )
 from airflow.sdk.definitions._internal.node import DAGNode
-from airflow.sdk.definitions.mappedoperator import ensure_xcomarg_return_value
+from airflow.sdk.definitions.mappedoperator import ensure_xcomarg_return_value, prevent_duplicates
 from airflow.sdk.definitions.taskgroup import MappedTaskGroup, TaskGroup
 from airflow.sdk.definitions.xcom_arg import XComArg
-from airflow.typing_compat import ParamSpec
-from airflow.utils.helpers import prevent_duplicates
 
 if TYPE_CHECKING:
     from airflow.sdk.definitions._internal.expandinput import (
@@ -150,7 +148,7 @@ class _TaskGroupFactory(ExpandableFactory, Generic[FParams, FReturn]):
     def expand_kwargs(self, kwargs: OperatorExpandKwargsArgument) -> DAGNode:
         if isinstance(kwargs, Sequence):
             for item in kwargs:
-                if not isinstance(item, XComArg | Mapping):
+                if not isinstance(item, (XComArg, Mapping)):
                     raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
         elif not isinstance(kwargs, XComArg):
             raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
