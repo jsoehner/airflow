@@ -21,8 +21,9 @@ import logging
 from collections import defaultdict
 from collections.abc import Callable, Collection
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
+import pendulum
 import sqlalchemy_jsonfield
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import (
@@ -54,8 +55,8 @@ from airflow.models.base import Base, StringID
 from airflow.models.dagbundle import DagBundleModel
 from airflow.models.dagrun import DagRun
 from airflow.models.team import Team
-from airflow.sdk.definitions.asset import Asset, AssetAlias, AssetUniqueKey, BaseAsset
 from airflow.sdk.definitions.deadline import DeadlineAlert
+from airflow.serialization.definitions.assets import SerializedAssetUniqueKey
 from airflow.settings import json
 from airflow.timetables.base import DataInterval, Timetable
 from airflow.timetables.interval import CronDataIntervalTimetable, DeltaDataIntervalTimetable
@@ -70,20 +71,29 @@ if TYPE_CHECKING:
     from typing import TypeAlias
 
     from airflow.models.mappedoperator import MappedOperator
+    from airflow.serialization.definitions.assets import (
+        SerializedAsset,
+        SerializedAssetAlias,
+        SerializedAssetBase,
+    )
     from airflow.serialization.serialized_objects import SerializedBaseOperator, SerializedDAG
 
     Operator: TypeAlias = MappedOperator | SerializedBaseOperator
+    UKey: TypeAlias = SerializedAssetUniqueKey
 
 log = logging.getLogger(__name__)
-
-AssetT = TypeVar("AssetT", bound=BaseAsset)
 
 TAG_MAX_LEN = 100
 
 DagStateChangeCallback = Callable[[Context], None]
 ScheduleInterval = None | str | timedelta | relativedelta
 
-ScheduleArg = ScheduleInterval | Timetable | BaseAsset | Collection[Union["Asset", "AssetAlias"]]
+ScheduleArg = Union[
+    ScheduleInterval,
+    Timetable,
+    "SerializedAssetBase",
+    Collection[Union["SerializedAsset", "SerializedAssetAlias"]],
+]
 
 
 def infer_automated_data_interval(timetable: Timetable, logical_date: datetime) -> DataInterval:
@@ -136,11 +146,15 @@ def get_run_data_interval(timetable: Timetable, run: DagRun) -> DataInterval:
     ) is not None:
         return data_interval
 
-    if (data_interval := timetable.infer_manual_data_interval(run_after=run.run_after)) is not None:
+    if (
+        data_interval := timetable.infer_manual_data_interval(run_after=pendulum.instance(run.run_after))
+    ) is not None:
         return data_interval
 
     # Compatibility: runs created before AIP-39 implementation don't have an
     # explicit data interval. Try to infer from the logical date.
+    if TYPE_CHECKING:
+        assert run.logical_date is not None
     return infer_automated_data_interval(timetable, run.logical_date)
 
 
@@ -521,14 +535,13 @@ class DagModel(Base):
         :param session: ORM Session
         :return: Paused Dag_ids
         """
-        paused_dag_ids = session.execute(
+        paused_dag_ids = session.scalars(
             select(DagModel.dag_id)
             .where(DagModel.is_paused == expression.true())
             .where(DagModel.dag_id.in_(dag_ids))
         )
 
-        paused_dag_ids = {paused_dag_id for (paused_dag_id,) in paused_dag_ids}
-        return paused_dag_ids
+        return set(paused_dag_ids)
 
     @property
     def safe_dag_id(self):
@@ -603,7 +616,7 @@ class DagModel(Base):
 
         evaluator = AssetEvaluator(session)
 
-        def dag_ready(dag_id: str, cond: BaseAsset, statuses: dict[AssetUniqueKey, bool]) -> bool:
+        def dag_ready(dag_id: str, cond: SerializedAssetBase, statuses: dict[UKey, bool]) -> bool:
             try:
                 return evaluator.run(cond, statuses)
             except AttributeError:
@@ -627,8 +640,8 @@ class DagModel(Base):
             else:
                 adrq_by_dag[adrq.target_dag_id].append(adrq)
 
-        dag_statuses: dict[str, dict[AssetUniqueKey, bool]] = {
-            dag_id: {AssetUniqueKey.from_asset(adrq.asset): True for adrq in adrqs}
+        dag_statuses: dict[str, dict[UKey, bool]] = {
+            dag_id: {SerializedAssetUniqueKey.from_asset(adrq.asset): True for adrq in adrqs}
             for dag_id, adrqs in adrq_by_dag.items()
         }
         ser_dags = SerializedDagModel.get_latest_serialized_dags(dag_ids=list(dag_statuses), session=session)
