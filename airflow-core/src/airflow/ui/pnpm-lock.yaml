@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@chakra-ui/anatomy':
-        specifier: ^2.3.4
-        version: 2.3.4
+        specifier: ^2.3.6
+        version: 2.3.6
       '@chakra-ui/react':
         specifier: ^3.20.0
         version: 3.20.0(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -132,7 +132,7 @@ importers:
         specifier: ^6.30.0
         version: 6.30.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react-syntax-highlighter:
-        specifier: ^16.1.0
+        specifier: ^16.0.0
         version: 16.1.0(react@19.2.1)
       remark-gfm:
         specifier: ^4.0.1
@@ -397,8 +397,8 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@chakra-ui/anatomy@2.3.4':
-    resolution: {integrity: sha512-fFIYN7L276gw0Q7/ikMMlZxP7mvnjRaWJ7f3Jsf9VtDOi6eAYIBRrhQe6+SZ0PGmoOkRaBc7gSE5oeIbgFFyrw==}
+  '@chakra-ui/anatomy@2.3.6':
+    resolution: {integrity: sha512-TjmjyQouIZzha/l8JxdBZN1pKZTj7sLpJ0YkFnQFyqHcbfWggW9jKWzY1E0VBnhtFz/xF3KC6UAVuZVSJx+y0g==}
 
   '@chakra-ui/react@3.20.0':
     resolution: {integrity: sha512-zHYQAUqrT2pZZ/Xi+sskRC/An9q4ZelLPJkFHdobftTYkcFo1FtkMbBO0AEBZhb/6mZGyfw3JLflSawkuR++uQ==}
@@ -4732,7 +4732,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@chakra-ui/anatomy@2.3.4': {}
+  '@chakra-ui/anatomy@2.3.6': {}
 
   '@chakra-ui/react@3.20.0(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
